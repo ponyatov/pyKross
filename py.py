@@ -98,6 +98,8 @@ dat = [
        Symbol('symsym'), Num(456), Symbol(-4e+5), Hex(0x1234), Int('123')
        ]
 
+# syntax lexer/parser generators
+
 def lex():
     'return contents of lpp.lpp file (flex lexer)'
     S = '%{\n#include "hpp.hpp"\n%}\n'+\
