@@ -19,12 +19,15 @@ class Object:
         'in GNU++11 C++'
         return c()
     lex = 'error(LEX-ERROR)'
+    def lex_TOC(self):
+        C = self.__class__.__name__
+        return 'TOC(%s,%s)'%(C,C.upper())
     def flex(self):
         'in Lex/Flex'
-        C = self.__class__.__name__
-        return '%s%s/* %s */\n'%(
+        return '%s%s%s\n'%(
             pad(self.lex,20),
-            pad('TOC(%s,%s)'%(C,C.upper()),20),self.__class__.__doc__)
+            pad(self.lex_TOC(),20),
+            pad('/* '+self.__class__.__doc__,40-4)+' */')
     yacc = 'error(YACC-ERROR)'
     def bison(self):
         'in Yacc/Bison'
@@ -48,10 +51,14 @@ class Doc(Object):
     'some documentation info'
     tag = 'doc'
 class LineComment(Doc):
-    'comment line'
+    'line comment'
     tag = 'comment'
     lex = r'#[^\n]*\n'
-    def flex(self): return pad(self.lex,20)+pad('{}',20)+'/* line comment */\n'
+    def lex_TOC(self): return '{}'
+class SyntaxSpaces(Doc):
+    'drop spaces'
+    lex = r''
+    def lex_TOC(self): return '{}'
     
 # scalars
     
@@ -62,7 +69,9 @@ class Symbol(Scalar):
     def __init__(self,val): self.val = str(val)
     
 class String(Scalar):
+    'string'
     tag = 'str'
+    lex = r"'.*'"
     def __init__(self,val): self.val = str(val)
 
 class AnyNumber(Scalar):
@@ -91,15 +100,16 @@ dat = [
 
 def lex():
     'return contents of lpp.lpp file (flex lexer)'
-    S = ''
-    head = '%{\n#include "hpp.hpp"\n%}\n%option noyywrap yylineno\n'+\
-    'S [\+\-]?\nN [0-9]+\n'+'%%\n'
-    foot = pad(r'[ \t\r\n]+',20)+pad('{}',20)+'/* drop spaces */\n%%\n'
-    S += head
+    S = '%{\n#include "hpp.hpp"\n%}\n'+\
+        '%option noyywrap yylineno\n'+\
+        'S [\+\-]?\nN [0-9]+\n'+\
+        '%%\n'
     for i in [
-              LineComment(''),Symbol('sym'),Num(0),Int(0),Hex(0)
+              LineComment(''),String(''),Symbol('sym'),
+              Num(0),Hex(0),Int(0),
+              SyntaxSpaces('')
               ]: S += i.flex()
-    S += foot
+    S += '%%\n'
     return S
 
 print 'Y:'
