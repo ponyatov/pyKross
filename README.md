@@ -1,0 +1,2 @@
+# pyKross
+.py cross translation
